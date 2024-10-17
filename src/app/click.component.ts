@@ -14,6 +14,7 @@ export class ClickComponent {
   clicked = signal(false)
 
   onClick() {
+    console.log('clicked');
     this.clicked.update(value => !value)
   }
 }

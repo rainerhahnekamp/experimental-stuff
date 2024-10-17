@@ -1,6 +1,12 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { AppComponent } from './app/app.component';
+import "zone.js"
+import "zone.js/testing"
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+import {getTestBed, TestBed} from '@angular/core/testing';
+import {ClickComponent} from './app/click.component';
+import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from '@angular/platform-browser-dynamic/testing';
+
+
+
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
+const fixture = TestBed.configureTestingModule({imports: [ClickComponent]}).createComponent(ClickComponent);
+fixture.autoDetectChanges(true)
