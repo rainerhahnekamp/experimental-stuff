@@ -9,33 +9,46 @@ type ComponentTestFixture = {
   renderComponent: RenderFn,
   runInBrowser: (cb: () => void) => Promise<void>,
   sharedContext: Map<string, unknown>,
-  transformer: () => void
+  testId: { id: string },
+  transformer: () => void,
+
 }
 
 const componentTest = base.extend<ComponentTestFixture>({
-  runInBrowser: async ({page}, use, testInfo) => {
-    const line = testInfo.line;
-    await use(async () => {
-      await page.evaluate((line) => console.log(`Running function of line ${line}`), line);
+  testId: [async ({}, use) => {
+    await use({id: generateUniqueId()});
+  }, {auto: true}],
+
+  transformer: [async ({testId}, use, testInfo) => {
+    extractBrowserFunctions(testInfo.file, path.join(testInfo.project.testDir, '../src/component-testing'), ['renderComponent', 'runInBrowser'], testId.id, 'current-test.ts');
+    await use(() => {
+    });
+  }, {auto: true}],
+
+  runInBrowser: async ({page}, use) => {
+    await use(async (cb) => {
+      return await page.evaluate(fn => window.runFunction(fn), cb.toString());
     });
   },
 
-  renderComponent: async ({page}, use, testInfo) => {
+  renderComponent: async ({page, testId}, use, testInfo) => {
     const line = testInfo.line;
     await use(async () => {
-      await page.evaluate((line) => console.log(`Setting up Test ${line}`), line);
+      await page.goto('http://localhost:4200', {waitUntil: 'networkidle'});
+      await page.evaluate(({id, testId}) => {
+        window.setupTest(id);
+      }, {id: line, testId: testId.id});
+      await page.waitForFunction((id) => window.testId === id, testId.id);
     });
   },
 
   sharedContext: async ({}, use) => {
     await use(new Map());
   },
-
-  transformer: [async ({}, use, testInfo) => {
-    extractBrowserFunctions(testInfo.file, path.join(testInfo.project.testDir, 'component-testing'), ['renderComponent', 'runInBrowser']);
-    await use(() => {
-    });
-  }, {auto: true}]
 })
+
+function generateUniqueId(): string {
+  return 'id_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+}
 
 export const test = mergeTests(base, componentTest);

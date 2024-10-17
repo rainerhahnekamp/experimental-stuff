@@ -2,6 +2,11 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Custom unique ID generator (if needed elsewhere)
+function generateUniqueId(): string {
+  return 'id_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
 interface ExtractedFunction {
   code: string;
   context: string;
@@ -53,8 +58,6 @@ function extractFunctions(
   extractedFunctions: ExtractedFunction[],
   fileName: string
 ): ts.SourceFile {
-  let functionCounter = 1;
-
   function visit(node: ts.Node): ts.Node {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       const functionName = node.expression.text;
@@ -113,7 +116,7 @@ function extractFunctions(
           collectIdentifiers(functionBody);
 
           extractedFunctions.push({
-            code: nodeCode, // Only store the body of runInBrowser
+            code: nodeCode, // Only store the body of runInBrowser, not wrapped in another function
             context: functionName,
             fileName: fileName,
             lineNumber: lineNumber,
@@ -176,7 +179,9 @@ function extractRelevantImports(
 export function extractBrowserFunctions(
   filePath: string,
   outputDir: string,
-  functionNames: string[]
+  functionNames: string[],
+  id: string, // ID passed as a parameter
+  outputFileName: string // Output filename passed as a parameter
 ) {
   // Get the input file's directory
   const inputDir = path.dirname(filePath);
@@ -199,9 +204,8 @@ export function extractBrowserFunctions(
   // Transform the source file, extracting the specified functions
   extractFunctions(sourceFile, printer, functionNames, extractedFunctions, path.basename(filePath));
 
-  // Create a unique filename for the extracted functions
-  const uniqueFunctionsFileName = `extractedFunctions_${Date.now()}.ts`; // Unique name with timestamp
-  const extractedFunctionsPath = path.join(outputDir, uniqueFunctionsFileName);
+  // Use the provided output filename
+  const extractedFunctionsPath = path.join(outputDir, outputFileName);
 
   let extractedFunctionsCode = '';
   let renderComponentFunctionsCode = '';
@@ -215,8 +219,8 @@ export function extractBrowserFunctions(
     combinedUsedIdentifiers = new Set([...combinedUsedIdentifiers, ...func.usedIdentifiers]);
 
     if (func.context !== 'renderComponent') {
-      // Include non-renderComponent functions (e.g., runInBrowser) in the extractedFunctionsMap
-      extractedFunctionsCode += `  ${func.lineNumber}: function() {\n${func.code}\n},\n\n`;
+      // Directly store the body of the function without wrapping it
+      extractedFunctionsCode += `  ${func.lineNumber}: ${func.code},\n\n`;
     } else {
       // Add renderComponent to the renderComponentFunctionsMap
       renderComponentFunctionsCode += `  ${func.lineNumber}: [${func.parameters?.join(', ')}],\n\n`;
@@ -230,8 +234,11 @@ export function extractBrowserFunctions(
   // Extract the relevant import statements and relativize import paths
   const relevantImports = extractRelevantImports(sourceFile, importDeclarations, combinedUsedIdentifiers, inputDir, outputDir, printer);
 
-  // Write imports and functions to the extracted file
-  const fullExtractedCode = relevantImports + '\n' + extractedFunctionsCode + renderComponentFunctionsCode;
+  // Add the window['testId'] assignment at the end of the output
+  const setTestIdCode = `window['testId'] = '${id}';\n`;
+
+  // Write imports, functions, and window['testId'] to the extracted file
+  const fullExtractedCode = relevantImports + '\n' + extractedFunctionsCode + renderComponentFunctionsCode + setTestIdCode;
   ensureDirectoryExistence(extractedFunctionsPath);
   fs.writeFileSync(extractedFunctionsPath, fullExtractedCode);
   console.log(`Extracted functions saved to ${extractedFunctionsPath}`);

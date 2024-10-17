@@ -1,4 +1,20 @@
-import {Component, signal} from '@angular/core';
+import { Component, inject, Injectable, signal } from '@angular/core';
+import { createIncrementalCompilerHost } from 'typescript';
+
+
+@Injectable({ providedIn: 'root' })
+export class ClickCounter {
+  #counter = 0;
+
+  get counter() {
+    return this.#counter
+  }
+
+  increment() {
+    this.#counter++
+  }
+
+}
 
 @Component({
   selector: 'app-click',
@@ -11,10 +27,11 @@ import {Component, signal} from '@angular/core';
   standalone: true,
 })
 export class ClickComponent {
+  clickCounter = inject(ClickCounter);
   clicked = signal(false)
 
   onClick() {
-    console.log('clicked');
     this.clicked.update(value => !value)
+    this.clickCounter.increment();
   }
 }
