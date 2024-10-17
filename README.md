@@ -5,3 +5,5 @@ The approach is to override the test object. If Playwright would introduce certa
 Potentially the test object might become invalid in the browser or cause some compilation error, due to the Angular CLI config.
 
 We think this risk is acceptable, as the test object's methods are all nooped, so no code is executed and the error would be in the typing only. So what the user would have to do is to use an Angular CLI and Playwright which are compatible with each other in terms of TypeScript.
+
+Link to the Video: https://youtu.be/6r8i7G9em8c
