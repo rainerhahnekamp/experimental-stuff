@@ -1,27 +1,7 @@
-# PlaywrightComponentTestingAngularPrototype
+Risk
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.8.
+The approach is to override the test object. If Playwright would introduce certain methods to the test object, they would also be overriden. The main risk at the moment is that one of these methods have to be implemented and not nooped. This would require us to release a new version.
 
-## Development server
+Potentially the test object might become invalid in the browser or cause some compilation error, due to the Angular CLI config.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+We think this risk is acceptable, as the test object's methods are all nooped, so no code is executed and the error would be in the typing only. So what the user would have to do is to use an Angular CLI and Playwright which are compatible with each other in terms of TypeScript.
