@@ -1,27 +1,41 @@
 import "zone.js"
 import "zone.js/testing"
 
-import {getTestBed, TestBed, TestModuleMetadata} from '@angular/core/testing';
-import {ClickComponent} from './app/click.component';
-import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from '@angular/platform-browser-dynamic/testing';
-import {extractedFunctionsMap, renderComponentFunctionsMap} from './component-testing/current-test';
+import { getTestBed, TestBed, TestModuleMetadata } from '@angular/core/testing';
+import { ClickComponent } from './app/click.component';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+import { extractedFunctionsMap, renderComponentFunctionsMap } from './component-testing/current-test';
 
 console.debug('Extracted Functions: %o', extractedFunctionsMap);
 console.debug('Render Functions: %o', renderComponentFunctionsMap);
 
-window.runFunction = (fnCode: string): unknown => {
+// Remove unnecessary spaces and newlines for consistent formatting
+export function normalizeFunction(serializedFunction: string): string {
+  return serializedFunction.replace(/\s+/g, ' ').trim();
+}
+
+const normalizedExtractedFunctionsMap = Object.fromEntries(Object.values(extractedFunctionsMap).map((fn) => [normalizeFunction(fn.toString()), fn]))
+
+window.runFunction = (rawFnCode: string): unknown => {
+  const fnCode = normalizeFunction(rawFnCode);
   console.debug("Searching for function %s", fnCode);
-  const functionsMap = extractedFunctionsMap as unknown as Record<number, () => void>
-  const fn = Object.values(functionsMap).find(fn => {
-    console.log('Comparing %s to %s', fn.toString(), fnCode);
-    return fn.toString() === fnCode;
-  });
+  const fn = Object.keys(normalizedExtractedFunctionsMap).find((serializedFunction) => {
+    console.group("RunFunction: Finding function to run")
+    console.log("Extracted Code");
+    console.log(serializedFunction);
+    console.log("Code from Playwright");
+    console.log(fnCode);
+    console.groupEnd()
+
+    return serializedFunction === fnCode;
+  })
+
   if (!fn) {
     console.error(`Was not able to find browser function ${fnCode}`);
     return false;
   }
 
-  return fn();
+  return normalizedExtractedFunctionsMap[fn]();
 }
 
 window.setupTest = (id: number) => {

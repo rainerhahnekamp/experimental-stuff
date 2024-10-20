@@ -4,7 +4,13 @@ import { ClickComponent, ClickCounter } from "../app/click.component";
 import { TestBed } from "@angular/core/testing";
 
 export const extractedFunctionsMap = {
-  17: () => TestBed.inject(ClickCounter).counter,
+  18: () => {
+    const a = 1;
+    var b = 2;
+    console.log(a + b);
+},
+
+  24: () => TestBed.inject(ClickCounter).counter,
 
 };
 
@@ -13,4 +19,4 @@ export const renderComponentFunctionsMap = {
 
 };
 
-window['testId'] = 'id_8pmheeao4_1729197506882';
+window['testId'] = 'id_tsoheqmfi_1729453672582';
