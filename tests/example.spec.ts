@@ -25,6 +25,5 @@ test.describe('ClickComponent', () => {
     const counter = await runInBrowser(() => TestBed.inject(ClickCounter).counter)
 
     expect(counter).toBe(3)
-
   });
 })
